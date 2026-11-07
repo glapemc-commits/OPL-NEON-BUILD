@@ -1,0 +1,39 @@
+
+name: Build Open PS2 Loader ELF
+
+on:
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Baixar codigo
+        uses: actions/checkout@v4
+
+      - name: Extrair projeto
+        run: |
+          unzip -q Open-PS2-Loader-NEON-Android-build.zip -d source
+
+      - name: Compilar ELF
+        run: |
+          docker run --rm \
+            -v "$GITHUB_WORKSPACE/source/Open-PS2-Loader-1.1.0:/src" \
+            -w /src \
+            ps2dev/ps2dev:latest \
+            sh -c "make -j4"
+
+      - name: Verificar ELF
+        run: |
+          mkdir -p dist
+          find source -type f -iname "*.elf" -exec cp {} dist/ \;
+          ls -lh dist/
+
+      - name: Disponibilizar ELF
+        uses: actions/upload-artifact@v4
+        with:
+          name: OPNPS2LD-ELF
+          path: dist/
+          if-no-files-found: error
+          
